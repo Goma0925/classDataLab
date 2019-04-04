@@ -7,7 +7,7 @@ var screen = {
 };
 
 var margins = {
-  top:0,
+  top:80,
   bottom: 30,
   left: 40,
   right: 40
@@ -25,23 +25,29 @@ var labelSize = 15;
 var nameFontSize = 15;
 var dataStartX = picSize + descriptionColSize + margins.left;
 
+var colorScaleArr = ["white", "#ff0000", "#ff6600", "#ffcc66", "#66ccff", "#0066ff","#0000cc"]
+var scaleThresholds =  [0.5, 0.6, 0.7, 0.8, 0.9]
+
 var colors = function(dayObj){
   //Takes a dayObj from penguins.grade
   var percentage = dayObj.grade / dayObj.max;
   if (percentage >= 0.9){
-    return "#0066ff";
+    return "#0000cc";//Blue
   }
   else if (percentage >= 0.8) {
-    return "#66ffff";
-  }
-  else if (percentage >= 0.75) {
-    return "#99ff99";
+    return "#0066ff";//Light blue
   }
   else if (percentage >= 0.7) {
-    return "#ffff99";
+    return "#66ccff";//green
+  }
+  else if (percentage >= 0.6) {
+    return "#ffcc66";//orange yellow
+  }
+  else if (percentage >= 0.5){
+    return "#ff6600";//red orange
   }
   else {
-    return "#ff6666";
+    return "#ff0000";//red
   }
 }
 
@@ -85,7 +91,29 @@ var drawChart = function(dataSet, svgSelector)
                      .style("stroke-width", 1)
                      .classed("graph-border", true);
 
-  console.log("graphSVG", graphSVG)
+  var legend = graphSVG.append("g")
+                          .classed("legend", true);
+
+  var legendRects = legend.selectAll("rect")
+                          .data(colorScaleArr)
+                          .enter()
+                          .append("rect")
+                          .attr("x", function(color, i){return margins.left + 250 + 120 * i})
+                          .attr("y", function(color, i){return 30})
+                          .attr("height", function(color, i){return 20})
+                          .attr("width", function(color, i){return 20})
+                          .attr("fill", function(color){return color})
+
+  var textArr = ["No data", "<50%", "50-60%", "60-70%", "70-80%", "80-90%", ">90%"]
+  var legendText = legend.selectAll("text")
+                          .data(textArr)
+                          .enter()
+                          .append("text")
+                          .attr("x", function(color, i){return margins.left + 280 + 120 * i})
+                          .attr("y", function(color, i){return 45})
+                          .text(function(text){return  text})
+
+
   var columnDayLabelRow =  graphSVG.append("g")
                           .classed("label-row", true);
 
@@ -171,7 +199,8 @@ var colTypeLabels = columnTypeLabelRow.selectAll("text:not(.day-label)")
                               return "translate(0," + ((rowSize*i) + margins.top + (rowGap*i) + colLabelHeight) + ")"
                             })
                             .attr("student-name", function(peng){return peng.name})
-                            .classed("student-row", true);
+                            .attr("class", function(peng, i){return "student-row"})
+
 
   var findIndexOfDay = function(dayObj, dayArr) {
     // console.log("day="+dayObj.day + "  :" +validDays.find(function(ele){
@@ -260,7 +289,7 @@ var initializeEventListeners = function(data){
               })
             });
           var studentRows = d3.selectAll(".student-row");
-          //console.log("rows", studentRows);
+          console.log("rows", studentRows);
 
 
           var findIndexOfDay = function(dayObj, dayArr) {
@@ -291,14 +320,11 @@ var initializeEventListeners = function(data){
                               .attr("fill-opacity", function(dayObj){
                                 if (shownData === "quiz/test/final")
                                 {
-                                  console.log("shownData !== quiz/test/final");
-                                  console.log("shownData:", shownData)
                                   if (dayObj.type === "homework"){return 1}
                                   else {return 0;}
                                 }
                                 else if (shownData === "homework"){
-                                  console.log("shownData === homework");
-                                  console.log("shownData:", shownData)
+
                                   if (dayObj.type === "homework"){return 0}
                                   else {return 1;}
                                 }
@@ -306,23 +332,29 @@ var initializeEventListeners = function(data){
                               //.attr("student-name", function(){return d3.select(this.parentNode).getAttribute("student-name")})
                               .attr("grade-type", function(dayObj, i){return dayObj.type})
                               .attr("day", function(dayObj, i){return dayObj.day})
-                              .attr("grade", function(dayObj, i){return dayObj.grade + "/" + dayObj.max})
-                              .classed("grade-rect");
+                              .attr("grade", function(dayObj, i){return dayObj.grade + "/" + dayObj.max});
           if (shownData === "quiz/test/final"){
-            shownData = "homework";}
+            shownData = "homework";
+            document.getElementById("data-heading").innerText = "Homework Grades(%)";
+          document.getElementById("switch-data").innerText = "See quiz/test/final grades";}
           else if (shownData === "homework"){
-            shownData === "quiz/test/final";}
-
+            shownData = "quiz/test/final";
+            document.getElementById("data-heading").innerText = "Quiz/Test/Final Grades(%)";
+          document.getElementById("switch-data").innerText = "See homework grades";}
+          console.log("NOW SHOWING:", shownData)
 
         });
-}
+
+      document.getElementById("description").addEventListener("click", function(){
+          window.alert("This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to compare each student as well as to illustrate the change throughout the semester. Using the chart, you can see some of the penguins, especially painter-penguin, penguin-grill, and pharaoh-penguin are struggling in the class while some others like pilot-penguin and crafty-penguin are constantly getting good grades.")
+      });
+  }
 
 
 dataPromise.then(function(data){
       console.log("data", data)
       initializeEventListeners(data);
       drawChart(data, "#chart");
+      window.alert("This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to present the data to be able to comparable as well as to illustrate the change.")
+
     });
-
-
-//Next: Add the top labels

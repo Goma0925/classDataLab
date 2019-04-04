@@ -4,7 +4,7 @@ h1{
 }
 
 body{
-  background-color: #80ced6;
+  background-color: #cccccc;
   margin: 0;
 }
 
@@ -22,7 +22,20 @@ body{
   border-bottom: 4px solid grey;
 }
 
+#switch-data{
+  margin-top: 10px;
+}
 
+.data-heading{
+  width: 100%;
+  text-align: center;
+}
+
+.control-panel{
+  text-align: center;
+  background-color: #5e76a0;
+  padding-bottom: 20px;
+}
 
 .sidebar{
   position: fixed;
@@ -42,8 +55,7 @@ li{
 }
 
 body > div.content{
-  position: absolute;
-  top:90px;
+  position: relative;
   left: 0;
   width: 100%;
   overflow: scroll;
