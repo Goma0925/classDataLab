@@ -355,6 +355,6 @@ dataPromise.then(function(data){
       console.log("data", data)
       initializeEventListeners(data);
       drawChart(data, "#chart");
-      window.alert("This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to present the data to be able to comparable as well as to illustrate the change.")
+      //window.alert("This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to present the data to be able to comparable as well as to illustrate the change.")
 
     });
