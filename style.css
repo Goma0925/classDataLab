@@ -1,0 +1,50 @@
+h1{
+  text-align: center;
+ margin: 0;
+}
+
+body{
+  background-color: #80ced6;
+  margin: 0;
+}
+
+.heading{
+  position: relative;
+  left:0;
+  top:0;
+  color: #034f84;
+  display: block;
+  font-size: 50px;
+  margin: 0;
+  height: 60px;
+  width: 100%;
+  background-color: #deeaee;
+  border-bottom: 4px solid grey;
+}
+
+
+
+.sidebar{
+  position: fixed;
+  top:64px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  overflow: scroll;
+}
+
+
+li{
+  text-align: center;
+  border-bottom: solid;
+  border-color: #f0efef;
+  background-color:  white;
+}
+
+body > div.content{
+  position: absolute;
+  top:90px;
+  left: 0;
+  width: 100%;
+  overflow: scroll;
+}
