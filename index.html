@@ -8,14 +8,48 @@
     <h1 class="heading">Student Grade Monitor</h1>
     <div class="control-panel">
       <button id="switch-data">See homework grades</button>
+      <button id="how-to-use">How to use</button>
+
       <button id="description">Description</button>
       <h2 id="data-heading">Quiz/Test/Final Grades(%)</h2>
     </div>
     <div class="content">
       <svg id="chart"></svg>
       <div id="profile-pics"></div>
+      <!-- <div id="tooltip">
+        <p id="tooltip-day">Tooltip text</p>
+        <span id="tooltiptext">Tooltip text</span>
+      </div> -->
+    </div>
+    <div id="myModal" class="modal">
+
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Student: <span class="detail-report-heading">Penguin name</span><br>
+          <span class="detail-report-data-label">Data type</span></h2>
+        <button type="button" id="line" class="button" name="button"><font class="button-text">Quizzes-Line</font></button>
+        <button type="button" id="area" class="button" name="button"><font class="button-text">Quizzes-Area</font></button>
+        <button type="button" id="line2" class="button" name="button"><font class="button-text">HW-Line</font></button>
+        <button type="button" id="area2" class="button" name="button"><font class="button-text">HW-Area</font></button>
+        <svg class="detail-report"></svg>
+      </div>
+    </div>
+    <div class="welcome-modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="wm-head">How to use</h2><span class="wm-content">
+1.&nbsp;Scroll the color map to sideways to see the general trend and change of the student’s grade. The default shows the quiz/test/final grade.<br>
+2.&nbsp;Switch between quiz/test/final and homework by the button at the top. Each of the homework is represented by two columns. <br>&nbsp;&nbsp;&nbsp;&nbsp;For example, a homework on Day2 is represented by a rectangle that covers the columns of day2 and day3.<br>
+3.&nbsp;You can see the name of the student by clicking each row. <br>
+4.&nbsp;You can see the line/area chart for quiz and homework for each student by clicking either the name or the icon of the student.<br><br>
+      </div>
+    </div>
+
+
     </div>
   </body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script src="script.js"></script>
+  <script src="line_area.js"></script>
+  <script src="script_v2.js"></script>
 </html>

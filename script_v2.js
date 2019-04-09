@@ -1,4 +1,81 @@
-var dataPromise = d3.json("formattedData.json")
+//Modal Settings
+var formattedDataP = d3.json("formattedData.json");
+var openModal = function(penguinIndex){
+  console.log("Calling openModal()");
+  var modal = document.getElementById('myModal');
+  modal.style.display = "block";
+  formattedDataP.then(function(fData){
+    console.log("Penguin:", fData[penguinIndex].name);
+    console.log("Node",   d3.select("detail-report-heading").node());
+    d3.select(".detail-report-heading").node().innerText = fData[penguinIndex].name;
+    d3.select(".detail-report-data-label").node().innerText = "Quiz data";
+    dataP.then(function(data)
+    {
+        drawLineChart(data, ".detail-report", penguinIndex, screenSettings, marginSettings, fData);
+
+        //Buttons
+        d3.select("#area")
+          .on("click", function(d){
+          console.log("Next button clicked");
+          dataP.then(function(data)
+          {
+            //Quiz Charts
+            d3.selectAll(".detail-report>*").remove();
+            d3.selectAll(".detail-report-data-label").node().innerHTML = "Quiz Grades"
+            drawAreaChart(data, ".detail-report", penguinIndex, screenSettings, marginSettings);
+          });
+        });
+
+        d3.select("#area2")
+          .on("click", function(d){
+          console.log("Next button clicked");
+          dataP.then(function(data)
+          {
+            //Quiz Charts
+            d3.selectAll(".detail-report>*").remove();
+            d3.selectAll(".detail-report-data-label").node().innerHTML = "Homework Grades"
+            drawAreaChart2(data, ".detail-report", penguinIndex, screenSettings, marginSettings);
+
+          });
+        });
+
+
+
+
+        //Previous button
+
+          d3.select("#line")
+            .on("click", function(d){
+              console.log("Prev button clicked");
+              dataP.then(function(data)
+              {
+                d3.selectAll(".detail-report>*").remove();
+                d3.selectAll(".detail-report-data-label").node().innerHTML = "Quiz Grades"
+                drawLineChart(data, ".detail-report", penguinIndex, screenSettings, marginSettings);
+              });
+            });
+
+            d3.select("#line2")
+              .on("click", function(d){
+                console.log("Prev button clicked");
+                dataP.then(function(data)
+                {
+                  d3.selectAll(".detail-report>*").remove();
+                  d3.selectAll(".detail-report-data-label").node().innerHTML = "Homework Grades"
+                  drawLineChart2(data, ".detail-report", penguinIndex, screenSettings, marginSettings);
+                });
+              });
+    })
+  });
+
+  //Change the heading
+
+  //Button settings
+};
+
+
+//Load data
+var dataPromise = d3.json("formattedData.json");
 
 //Graph settings
 var screen = {
@@ -27,6 +104,7 @@ var dataStartX = picSize + descriptionColSize + margins.left;
 
 var colorScaleArr = ["white", "#ff0000", "#ff6600", "#ffcc66", "#66ccff", "#0066ff","#0000cc"]
 var scaleThresholds =  [0.5, 0.6, 0.7, 0.8, 0.9]
+var lastDay = 41;
 
 var colors = function(dayObj){
   //Takes a dayObj from penguins.grade
@@ -54,10 +132,10 @@ var colors = function(dayObj){
 var drawChart = function(dataSet, svgSelector)
 //This function is called at the bottom of the code.
 {
-  var penguins = dataSet
+  var penguins_unprocessed = dataSet
   var validDays = []//Days that exist in the dataSet
   var dayAndGradeType = []//Quiz/test/final corresponding to days
-  penguins.forEach(function(peng)
+  penguins_unprocessed.forEach(function(peng)
     {
     var validDaysTemp = peng.grades.forEach(function(gradeObj){
         if (!validDays.includes(gradeObj.day)){
@@ -157,12 +235,16 @@ var colTypeLabels = columnTypeLabelRow.selectAll("text:not(.day-label)")
                               .attr("height", rowSize - 0.5)
                               .attr("transform", function(peng, i){
                                 return "translate(0" + margins.left + "," + ((rowSize*i) + margins.top + (rowGap*i) + colLabelHeight) + ")"
+                              })
+                              .classed("student-pic", true)
+                              .on("click", function(peng, index){
+                                openModal(index);
                               });
 
-  var nameRow = graphSVG.append("g")
-                          .classed("name-row", true);
+  var nameCol = graphSVG.append("g")
+                          .classed("name-col", true);
 
-  var studentNames = nameRow.selectAll("text")
+  var studentNames = nameCol.selectAll("text")
                               .data(penguins)
                               .enter()
                               .append("text")
@@ -178,7 +260,11 @@ var colTypeLabels = columnTypeLabelRow.selectAll("text:not(.day-label)")
                               .attr("font-family", "sans-serif")
                               .attr("font-size", nameFontSize)
                               .attr("fill", "black")
-                              .text(function(peng){console.log("name:", peng.name); return peng.name;});
+                              .text(function(peng){return peng.name;})
+                              .classed("student-name", true)
+                              .on("click", function(peng, index){
+                                openModal(index);
+                              });
 
   var graphData = graphSVG.append("g")
                     .attr("x", margins.left)
@@ -200,6 +286,9 @@ var colTypeLabels = columnTypeLabelRow.selectAll("text:not(.day-label)")
                             })
                             .attr("student-name", function(peng){return peng.name})
                             .attr("class", function(peng, i){return "student-row"})
+                            .on("click", function(peng) {
+                              window.alert("Student: " + peng.name);
+                            });
 
 
   var findIndexOfDay = function(dayObj, dayArr) {
@@ -208,36 +297,102 @@ var colTypeLabels = columnTypeLabelRow.selectAll("text:not(.day-label)")
     return validDays.find(function(day){return day === dayObj.day}) - 1;
   }
 
-  var gradeRects = studentRows.selectAll("rect")
-                      .data(function(peng){return peng.grades})
+  var quizTestFinalGradeRects = studentRows.append("g")
+                      .classed("quiz-test-final", true)
+                      .selectAll("rect")
+                      .data(function(peng){return peng.grades.filter(function(dayObj){
+                          return dayObj.type !== 'homework';})
+                      })
                       .enter()
                       .append("rect")
                       //.attr("x", function(dayObj, i){return dataStartX + colSize*findIndexOfDay(dayObj, validDays)})
-                      .attr("width", function(day, i){return colSize})
+                      .attr("width", function(dayObj){return colSize;})
                       .attr("height", rowSize)
                       .style("stroke", "black")
                       .style("stroke-width", 1)
                       //change x based on day and y based on type(homework)
                       .attr("transform", function(dayObj, i){
-                        //if (dayObj.type === "homework")
-                        //{
-                          //return "translate(" + (dataStartX + colSize*findIndexOfDay(dayObj, validDays)) + "," + rowSize/2 +")";
-                        //}
-                        //else{
                           return "translate(" + (dataStartX + colSize*findIndexOfDay(dayObj, validDays)) + ",0)";
-                        //}
                       })
                       .attr("fill", function(dayObj){return colors(dayObj)})
-                      // .attr("fill-opacity", function(dayObj){
-                      //   if (dayObj.type === "homework"){return 0}
-                      //   else {return 1;}
-                      // })
+                      .attr("fill-opacity", function(dayObj){
+                        if (dayObj.type === "homework"){return 0}
+                        else {return 1;}
+                      })
                       //.attr("student-name", function(){return d3.select(this.parentNode).getAttribute("student-name")})
                       .attr("grade-type", function(dayObj, i){return dayObj.type})
                       .attr("day", function(dayObj, i){return dayObj.day})
                       .attr("grade", function(dayObj, i){return dayObj.grade + "/" + dayObj.max})
-                      .classed("grade-rect", true);
+                      .attr("id", function(dayObj){return "testGrade-day" + dayObj.day})
+                      .classed("grade-rect", true)
+                      // .on("click", function(dayObj){
+                      //   var id = "testGrade-day" + dayObj.day;
+                      //   var rect = document.getElementById(id);
+                      //   console.log("rect;", rect);
+                      //
+                      //   console.log("Coord:", rect.getBoundingClientRect());
+                      //   var tooltip = document.getElementById("tooltip");
+                      //
+                      //   console.log("Coord:", rect.getBoundingClientRect());
+                      //   var tooltip = d3.select(".tooltip");
+                      //   tooltip.style.position = "absolute";
+                      //   tooltip.style.left = rect.getBoundingClientRect().left +'px';
+                      //   tooltip.style.top = (rect.getBoundingClientRect().top + rowSize * 8) +'px';
+                      //
+                      // });;
 
+var hwGradeRects = studentRows.append("g")
+                    .classed("homework", true)
+                    .selectAll("rect")
+                    .data(function(peng){return peng.grades.filter(function(dayObj){
+                        return dayObj.type === 'homework';})
+                    })
+                    .enter()
+                    .append("rect")
+                    //.attr("x", function(dayObj, i){return dataStartX + colSize*findIndexOfDay(dayObj, validDays)})
+                    .attr("width", function(dayObj){
+                      if (dayObj.type === "homework"){
+                        return colSize*2;
+                      }
+                      else{
+                        return colSize;
+                      }
+                    })
+                    .attr("height", rowSize)
+                    .style("stroke", "black")
+                    .style("stroke-width", 1)
+                    //change x based on day and y based on type(homework)
+                    .attr("transform", function(dayObj, i){
+                        return "translate(" + (dataStartX + colSize*findIndexOfDay(dayObj, validDays)) + ",0)";})
+                    .attr("fill", function(dayObj){return colors(dayObj)})
+                    .attr("fill-opacity", function(dayObj){
+                      if (dayObj.type === "homework"){return 0}
+                      else {return 1;}
+                    })
+                    //.attr("student-name", function(){return d3.select(this.parentNode).getAttribute("student-name")})
+                    .attr("grade-type", function(dayObj, i){return dayObj.type})
+                    .attr("day", function(dayObj, i){return dayObj.day})
+                    .attr("grade", function(dayObj, i){return dayObj.grade + "/" + dayObj.max})
+                    .attr("id", function(dayObj){return "hwGrade-day" + dayObj.day})
+                    .classed("grade-rect", true);
+
+// hwGradeRects.on("click", function(dayObj){
+//                       var id = "hwGrade-day" + dayObj.day;
+//                       var rect = d3.select(this).node();
+//                       console.log("Rect:", rect)
+//                       var tooltip = document.getElementById("tooltip");
+//                       var tooltiptext = document.getElementById("tooltiptext");
+//                       var dayText = document.getElementById("tooltip-day")
+//                       tooltip.style.position = "absolute";
+//                       console.log("Right:", rect.getBoundingClientRect().left)
+//                       console.log("Top:", rect.getBoundingClientRect().top)
+//
+//                       tooltip.style.left = rect.getBoundingClientRect().left +'px';
+//                       tooltip.style.top = (rect.getBoundingClientRect().y - rowSize*4) +'px';
+//                       dayText.innerHTML = "DAY" + dayObj.day;
+//                       tooltiptext.innerHTML = "Homework: " + dayObj.grade + "/" + dayObj.max;
+//                       //tooltiptext
+//                     });
 
   //Line settings
 var lineContainer = graphSVG.append("g")
@@ -273,8 +428,7 @@ var descriptionVerticalLine = lineContainer.append("line")
     })
 };
 
-
-var initializeEventListeners = function(data){
+var setUpSwitchDataButton = function(data){
   document.getElementById("switch-data").addEventListener("click", function(){
           var penguins = data;
           var validDays = []//Days that exist in the dataSet
@@ -289,7 +443,7 @@ var initializeEventListeners = function(data){
               })
             });
           var studentRows = d3.selectAll(".student-row");
-          console.log("rows", studentRows);
+          //console.log("rows", studentRows);
 
 
           var findIndexOfDay = function(dayObj, dayArr) {
@@ -298,45 +452,33 @@ var initializeEventListeners = function(data){
             return validDays.find(function(day){return day === dayObj.day}) - 1
           }
 
-          var gradeRects = studentRows.selectAll("rect")
+          var gradeRects = studentRows.select(".quiz-test-final").selectAll("rect")
                               .data(function(peng){return peng.grades})
-
-                              //.attr("x", function(dayObj, i){return dataStartX + colSize*findIndexOfDay(dayObj, validDays)})
-                              .attr("width", function(day, i){return colSize})
-                              .attr("height", rowSize)
-                              .style("stroke", "black")
-                              .style("stroke-width", 1)
-                              //change x based on day and y based on type(homework)
-                              .attr("transform", function(dayObj, i){
-                                //if (dayObj.type === "homework")
-                                //{
-                                  //return "translate(" + (dataStartX + colSize*findIndexOfDay(dayObj, validDays)) + "," + rowSize/2 +")";
-                                //}
-                                //else{
-                                  return "translate(" + (dataStartX + colSize*findIndexOfDay(dayObj, validDays)) + ",0)";
-                                //}
-                              })
-                              .attr("fill", function(dayObj){return colors(dayObj)})
                               .attr("fill-opacity", function(dayObj){
-                                if (shownData === "quiz/test/final")
-                                {
-                                  if (dayObj.type === "homework"){return 1}
-                                  else {return 0;}
-                                }
-                                else if (shownData === "homework"){
+                                  if (shownData === "quiz/test/final"){
+                                    return 0;
+                                  }
+                                  else if (shownData === "homework") {
+                                    return 1;
+                                  };
+                                });
 
-                                  if (dayObj.type === "homework"){return 0}
-                                  else {return 1;}
-                                }
-                              })
-                              //.attr("student-name", function(){return d3.select(this.parentNode).getAttribute("student-name")})
-                              .attr("grade-type", function(dayObj, i){return dayObj.type})
-                              .attr("day", function(dayObj, i){return dayObj.day})
-                              .attr("grade", function(dayObj, i){return dayObj.grade + "/" + dayObj.max});
-          if (shownData === "quiz/test/final"){
+          var gradeRects = studentRows.select(".homework").selectAll("rect")
+                              .data(function(peng){return peng.grades})
+                              .attr("fill-opacity", function(dayObj){
+                                  if (shownData === "quiz/test/final"){
+                                    return 1;
+                                  }
+                                  else if (shownData === "homework") {
+                                    return 0;
+                                  };
+                                });
+
+          if (shownData === "quiz/test/final"){//If current shownData is quiz/test/final
             shownData = "homework";
             document.getElementById("data-heading").innerText = "Homework Grades(%)";
-          document.getElementById("switch-data").innerText = "See quiz/test/final grades";}
+            document.getElementById("switch-data").innerText = "See quiz/test/final grades";
+          }
           else if (shownData === "homework"){
             shownData = "quiz/test/final";
             document.getElementById("data-heading").innerText = "Quiz/Test/Final Grades(%)";
@@ -346,9 +488,54 @@ var initializeEventListeners = function(data){
         });
 
       document.getElementById("description").addEventListener("click", function(){
-          window.alert("This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to compare each student as well as to illustrate the change throughout the semester. Using the chart, you can see some of the penguins, especially painter-penguin, penguin-grill, and pharaoh-penguin are struggling in the class while some others like pilot-penguin and crafty-penguin are constantly getting good grades.")
-      });
+          var welcomeModal = document.getElementsByClassName('welcome-modal')[0];
+          var welcomeModalHead = document.getElementsByClassName('wm-head')[0];
+          var welcomeModalText = document.getElementsByClassName('wm-content')[0];
+          welcomeModalText.innerHTML = "This chart allows you to analyze the change of the data based on colors. Each row represents a student and each column represents a day.  You can scroll sideways to see more data. The color of each cell illustrates the grade of one of quiz/test/final/homework. The purpose of this design is to compare each student as well as to illustrate the change throughout the semester. Using the chart, you can see some of the penguins, especially painter-penguin, penguin-grill, and pharaoh-penguin are struggling in the class while some others like pilot-penguin and crafty-penguin are constantly getting good grades.";
+          var welcomeModalHead = document.getElementsByClassName('wm-head')[0].innerHTML = "Description";
+          welcomeModal.style.display = "block";
+          });
+
+};
+
+
+
+var setUpModalCloseButton = function(){
+  console.log("modal")
+  var modal = document.getElementById('myModal');
+  var welcomeModal = document.getElementsByClassName('welcome-modal')[0];
+  var dataModalCloseButton = document.getElementsByClassName("close")[0];
+  var welcomeModalCloseButton = document.getElementsByClassName("close")[1];
+  var howToUseButton = document.getElementById("how-to-use");
+
+
+
+  // When the user clicks on <span> (x), close the modal
+  dataModalCloseButton.onclick = function() {
+    modal.style.display = "none";
+  };
+
+  howToUseButton.onclick = function() {
+    var welcomeModal = document.getElementsByClassName('welcome-modal')[0];
+    var welcomeModalHead = document.getElementsByClassName('wm-head')[0];
+    var welcomeModalText = document.getElementsByClassName('wm-content')[0];
+    welcomeModalText.innerHTML = "1.&nbspScroll the color map to sideways to see the general trend and change of the student’s grade.<br> " +
+    "2.&nbspSwitch between quiz/test/final and homework by the button at the top. Each of the homework is represented by two columns. For example, a homework on Day2 is represented by a rectangle that covers day2 and day3.<br>" +
+    "3.&nbspYou can see the name of the student by clicking each row. <br>" + "4.&nbspYou can see the line/are chart for quiz and homework for each student by clicking either the name or the icon of each student.<br>"
+    var welcomeModalHead = document.getElementsByClassName('wm-head')[0].innerHTML = "How To Use";
+    welcomeModal.style.display = "block";
+  };
+
+  welcomeModalCloseButton.onclick = function() {
+    welcomeModal.style.display = "none";
   }
+
+};
+
+  var initializeEventListeners = function(data){
+  setUpSwitchDataButton(data);
+  setUpModalCloseButton();
+};
 
 
 dataPromise.then(function(data){
